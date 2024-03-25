@@ -2,19 +2,17 @@ import fetch from 'node-fetch';
 import { Utils } from './utils';
 import { NoodlParseServerResult } from './parse';
 
-export type GetLatestVersionOptions = {
-  appId: string;
-  masterKey: string;
-  port: number;
-}
-
 export type CFVersion = {
   functionVersion: string;
 }
 
 // Get the latest version of cloud functions deploy, if not provided in header
-async function fetchLatestVersion({ appId, masterKey, port }: GetLatestVersionOptions): Promise<CFVersion | undefined> {
-  const res = await fetch('http://localhost:' + port + '/classes/Ndl_CF?limit=1&order=-createdAt&keys=version', {
+async function fetchLatestVersion(noodlServer: NoodlParseServerResult): Promise<CFVersion | undefined> {
+  const appId = noodlServer.options.appId;
+  const masterKey = noodlServer.options.masterKey;
+  const serverURL = noodlServer.options.serverURL;
+
+  const res = await fetch(serverURL + '/classes/Ndl_CF?limit=1&order=-createdAt&keys=version', {
     headers: {
       'X-Parse-Application-Id': appId,
       'X-Parse-Master-Key': masterKey
@@ -38,14 +36,14 @@ async function fetchLatestVersion({ appId, masterKey, port }: GetLatestVersionOp
 type CFVersionCache = CFVersion & { ttl: number; }
 let _latestVersionCache: CFVersionCache | undefined = undefined;
 
-export async function getLatestVersion(options: GetLatestVersionOptions): Promise<CFVersion> {
+export async function getLatestVersion(noodlServer: NoodlParseServerResult): Promise<CFVersion> {
   if (_latestVersionCache && (_latestVersionCache.ttl === undefined || _latestVersionCache.ttl > Date.now())) {
     return _latestVersionCache;
   }
 
   _latestVersionCache = undefined;
 
-  const latestVersion = await fetchLatestVersion(options);
+  const latestVersion = await fetchLatestVersion(noodlServer);
   if (latestVersion) {
     _latestVersionCache = {
       ...latestVersion,

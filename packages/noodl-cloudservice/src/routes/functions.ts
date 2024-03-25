@@ -21,7 +21,7 @@ export async function routeFunctions(
     let requestVersion = req.headers["x-noodl-cloud-version"];
     let version: CFVersion = requestVersion
       ? { functionVersion: String(requestVersion) }
-      : await getLatestVersion(noodlServer.options);
+      : await getLatestVersion(noodlServer);
 
     // Execute the request
     const cfResponse = await executeFunction({
